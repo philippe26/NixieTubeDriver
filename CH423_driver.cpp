@@ -6,6 +6,7 @@
 #define CH423_CMD_SET_GPO_H         (0x46 >> 1) ///< Set high 8-bit GPO command
 #define CH423_CMD_READ_GPIO         (0x4D >> 1) ///< read segment SEG0-SEG7
 #define CH423_CMD_SET_GPO_BIDIR     (0x60 >> 1) 
+#define CH423_CMD_SET_DIGIT         (0x60 >> 1) /// from 0x60 to 0x70 (one addr for each digit)
 
 #if 0
 typedef union{
@@ -40,11 +41,16 @@ typedef union{
 
 bool CH423_driver::beginGPIO(bool outputOnly, bool IRQenabled) 
 {  
+  bool res=false;
   device_config=0;
   if(outputOnly) device_config |= 0x01;
   if(IRQenabled) device_config |= 0x08;  
-  if (openDrain) device_config |= 0x10;
-  return register_write(CH423_CMD_SET_SYSTEM_ARGS, device_config);
+  if (openDrain) device_config |= 0x10;  
+  res=register_write(CH423_CMD_SET_SYSTEM_ARGS, device_config);
+  #if CH423_LOW_LEVEL_DEBUG
+    Serial.print("~~~ CH423::beginGPIO, cfg="); Serial.print(device_config,HEX);Serial.println((res)?"[OK]":"[FAIL]");
+  #endif
+  return res;
 }
 bool CH423_driver::sleep() 
 {  
@@ -57,6 +63,7 @@ bool CH423_driver::wakeup()
 }
 bool CH423_driver::display(bool enable, uint8_t intensity ) 
 {
+  bool res=false;
   //Serial.print("Set Display ");Serial.println((enable)?"ON":"OFF");
 
   if (enable)  
@@ -74,12 +81,19 @@ bool CH423_driver::display(bool enable, uint8_t intensity )
       default: break; // high    
   }
   
-  return register_write(CH423_CMD_SET_SYSTEM_ARGS, device_config);  
+  res=register_write(CH423_CMD_SET_SYSTEM_ARGS, device_config);  
+  #if CH423_LOW_LEVEL_DEBUG
+    Serial.print("~~~ CH423::display, cfg="); Serial.print(device_config,HEX);Serial.println((res)?"[OK]":"[FAIL]");
+  #endif
+  return res;
 }
 
 bool CH423_driver::register_write(uint8_t offset, uint8_t value) 
 {
   if (selectBus()) {
+    #if CH423_LOW_LEVEL_DEBUG
+      Serial.print("~~~ CH423::regWrite, ofs="); Serial.print(offset,HEX);Serial.print(", data="); Serial.print(value,HEX);Serial.print(", chan=0x"); Serial.println(mux_channel,HEX);
+    #endif
     Wire.beginTransmission(offset);
     Wire.write(value);    
     return (Wire.endTransmission()==0)?true:false;
@@ -134,7 +148,7 @@ bool CH423_driver::setDigitRaw(uint8_t index, uint8_t value)
   uint8_t nb_digits=16;
   if (device_config&0x8) nb_digits--; // when interrupt is enabled, only 15 output over 16 are allowed
   if (index<nb_digits) {
-    return register_write(device_config+index, value);
+    return register_write(CH423_CMD_SET_DIGIT+index, value);
   }
   return false;  
 }

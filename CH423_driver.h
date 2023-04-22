@@ -4,6 +4,8 @@
 #include "Arduino.h"
 #include "TwoWireMultiplex.h"
 
+#define CH423_LOW_LEVEL_DEBUG 0
+
 /*
  * I2C Address of CH423/453
  * 20h : reserved
@@ -16,15 +18,12 @@
  * 27h : reserved
  * 30h to 3Fh : Set bidirectional I/O command
 */
-class CH423_driver {
+class CH423_driver: public TwoWireMultiplexInterface {
 
 public:
   CH423_driver(bool _openDrain=false)
-    : mux_drv(NULL), mux_channel(0), device_config(0), openDrain(_openDrain) 
+    : device_config(0), openDrain(_openDrain), TwoWireMultiplexInterface()
     {}
-
-  void attachTwoWireMultiplex(TwoWireMultiplex *mux, uint32_t channel) {mux_drv=mux; mux_channel=channel;}
-  inline bool selectBus() {if (mux_drv) return mux_drv->selectChannel(mux_channel); return true;}
 
   // Activate the display mode (scan enabled)  
   bool display(bool enable, uint8_t intensity=2 /*0=low, 2=max*/ ) ;
@@ -55,8 +54,7 @@ protected:
   bool register_read(uint8_t offset, uint8_t &value); 
 
 private:
-	TwoWireMultiplex *mux_drv;
-  uint32_t mux_channel;
+
   uint8_t device_config;  
   bool openDrain;
 };
