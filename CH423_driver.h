@@ -2,7 +2,6 @@
 #define __CH423_driver__
 
 #include "Arduino.h"
-#include "TwoWireMultiplex.h"
 
 #define CH423_LOW_LEVEL_DEBUG 0
 
@@ -18,11 +17,11 @@
  * 27h : reserved
  * 30h to 3Fh : Set bidirectional I/O command
 */
-class CH423_driver: public TwoWireMultiplexInterface {
+class CH423_driver {
 
 public:
   CH423_driver(bool _openDrain=false)
-    : device_config(0), openDrain(_openDrain), TwoWireMultiplexInterface()
+    : device_config(0), openDrain(_openDrain)
     {}
 
   // Activate the display mode (scan enabled)  
