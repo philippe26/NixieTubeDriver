@@ -51,6 +51,7 @@ public:
 protected:  
   bool register_write(uint8_t offset, uint8_t value); 
   bool register_read(uint8_t offset, uint8_t &value); 
+  virtual bool selectBus() {return true;}
 
 private:
 

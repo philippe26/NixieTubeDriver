@@ -93,23 +93,28 @@ bool CH423_driver::register_write(uint8_t offset, uint8_t value)
   #if CH423_LOW_LEVEL_DEBUG
     Serial.print("~~~ CH423::regWrite, ofs="); Serial.print(offset,HEX);Serial.print(", data="); Serial.print(value,HEX);Serial.print(", chan=0x"); Serial.println(mux_channel,HEX);
   #endif
-  Wire.beginTransmission(offset);
-  Wire.write(value);    
-  return (Wire.endTransmission()==0)?true:false;
+  if (selectBus()) {
+    Wire.beginTransmission(offset);
+    Wire.write(value);    
+    return (Wire.endTransmission()==0)?true:false;
+  } 
+  return false;
 }
 
 bool CH423_driver::register_read(uint8_t offset, uint8_t &value) 
 {
-   // ask for 1 bytes to be returned
-  if (Wire.requestFrom(offset, 1u) != 1)
-  {
-      // we are not receiving the number of bytes we need
-      return false;  
-  };
-  // read byte
-  value = Wire.read();
-  return true;
-
+  if (selectBus()) {
+    // ask for 1 bytes to be returned
+    if (Wire.requestFrom(offset, 1u) != 1)
+    {
+        // we are not receiving the number of bytes we need
+        return false;  
+    };
+    // read byte
+    value = Wire.read();
+    return true;
+  } 
+  return false;
 }
 
 uint8_t CH423_driver::getKeyCode()
